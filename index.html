@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>PeakPlan — Energy-Based Day Planner</title>
+<meta name="description" content="PeakPlan schedules your hardest tasks into your natural energy peaks. Plan smarter, not harder.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050315; --text:#fbfbfe; --primary:#2f27ce; --secondary:#dedcff;
+  --accent:#433bff; --muted:rgba(251,251,254,.55); --faint:rgba(251,251,254,.32);
+  --card:rgba(255,255,255,.045); --card-border:rgba(255,255,255,.10);
+  --glass:rgba(20,16,60,.55); --green:#34d399; --amber:#fbbf24; --red:#f87171;
+  --radius:18px; --shadow:0 18px 50px rgba(0,0,0,.45);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden;
+  padding-bottom:96px;
+}
+.mesh{position:fixed;inset:0;z-index:-1;overflow:hidden;background:var(--bg)}
+.blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.34;animation:drift 22s ease-in-out infinite alternate}
+.blob.b1{width:480px;height:480px;background:radial-gradient(circle,#433bff,transparent 70%);top:-140px;left:-120px}
+.blob.b2{width:420px;height:420px;background:radial-gradient(circle,#2f27ce,transparent 70%);bottom:-120px;right:-100px;animation-delay:-7s}
+.blob.b3{width:300px;height:300px;background:radial-gradient(circle,#7c6cff,transparent 70%);top:38%;left:55%;opacity:.22;animation-delay:-14s}
+@keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(60px,40px) scale(1.15)}}
+.wrap{max-width:640px;margin:0 auto;padding:0 18px}
+header.top{display:flex;align-items:center;justify-content:space-between;padding:20px 0 6px;position:sticky;top:0;z-index:30;background:linear-gradient(180deg,#050315 78%,transparent);backdrop-filter:blur(8px)}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--accent));display:grid;place-items:center;box-shadow:0 6px 18px rgba(67,59,255,.45)}
+.logo svg{width:22px;height:22px}
+.brand h1{font-size:19px;font-weight:800;letter-spacing:-.3px}
+.brand h1 span{background:linear-gradient(90deg,#a5a0ff,#fbfbfe);-webkit-background-clip:text;background-clip:text;color:transparent}
+.streak-chip{display:flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--card-border);border-radius:999px;padding:7px 13px;font-size:13px;font-weight:600;backdrop-filter:blur(10px)}
+.streak-chip svg{width:15px;height:15px}
+.hero{padding:14px 2px 18px}
+.hero h2{font-size:clamp(24px,6vw,32px);font-weight:800;letter-spacing:-.5px;line-height:1.15}
+.hero p{color:var(--muted);font-size:14px;margin-top:8px;line-height:1.55}
+.card{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:18px;backdrop-filter:blur(14px);box-shadow:var(--shadow);margin-bottom:16px;animation:rise .5s cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.card h3{font-size:15px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.card h3 svg{width:17px;height:17px}
+.sub{font-size:12.5px;color:var(--muted);margin-bottom:12px;line-height:1.5}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;font-family:inherit;font-weight:700;border-radius:14px;transition:transform .15s ease,box-shadow .15s ease,background .2s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;padding:14px 22px;font-size:15px;width:100%;box-shadow:0 10px 26px rgba(67,59,255,.4)}
+.btn-primary:hover{box-shadow:0 12px 32px rgba(67,59,255,.6)}
+.btn-ghost{background:rgba(255,255,255,.07);color:var(--text);border:1px solid var(--card-border);padding:10px 16px;font-size:13.5px}
+.btn-danger{background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.3);padding:10px 16px;font-size:13.5px}
+.btn-sm{padding:8px 13px;font-size:12.5px;border-radius:11px}
+.btn svg{width:16px;height:16px}
+.chip-row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.chip{border:1px solid var(--card-border);background:rgba(255,255,255,.04);color:var(--muted);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s}
+.chip.sel{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(67,59,255,.4)}
+label.f{display:block;font-size:13px;font-weight:600;margin:14px 0 6px}
+.hint{font-size:12px;color:var(--faint);margin-top:5px;line-height:1.5}
+input[type=text],input[type=time],select,textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--card-border);color:var(--text);border-radius:12px;padding:12px 14px;font-size:15px;font-family:inherit;outline:none;transition:border .2s}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+input[type=time]{color-scheme:dark}
+select option{background:#141038}
+.seg{display:flex;gap:8px;margin-top:8px}
+.seg .chip{flex:1;text-align:center}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;border-radius:999px;padding:4px 10px;text-transform:uppercase;letter-spacing:.4px}
+.badge svg{width:11px;height:11px}
+.b-hi{background:rgba(251,191,36,.15);color:var(--amber);border:1px solid rgba(251,191,36,.35)}
+.b-md{background:rgba(67,59,255,.15);color:#b9b3ff;border:1px solid rgba(67,59,255,.4)}
+.b-lo{background:rgba(52,211,153,.13);color:var(--green);border:1px solid rgba(52,211,153,.35)}
+.p-must{background:rgba(248,113,113,.14);color:#fca5a5;border:1px solid rgba(248,113,113,.35)}
+.p-should{background:rgba(67,59,255,.16);color:#c7c2ff;border:1px solid rgba(67,59,255,.4)}
+.p-nice{background:rgba(255,255,255,.08);color:var(--muted);border:1px solid var(--card-border)}
+.task{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.035);border:1px solid var(--card-border);border-radius:14px;padding:13px 14px;margin-bottom:10px;animation:rise .4s both;transition:border .2s,transform .15s}
+.task:hover{border-color:rgba(124,108,255,.4)}
+.task.done{opacity:.55}
+.task.done .t-title{text-decoration:line-through}
+.t-main{flex:1;min-width:0}
+.t-title{font-size:14.5px;font-weight:600;line-height:1.35}
+.t-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.t-dur{font-size:12px;color:var(--faint);display:inline-flex;align-items:center;gap:4px}
+.t-dur svg{width:12px;height:12px}
+.icon-btn{width:36px;height:36px;border-radius:11px;border:1px solid var(--card-border);background:rgba(255,255,255,.05);color:var(--text);display:grid;place-items:center;cursor:pointer;transition:all .18s;flex-shrink:0}
+.icon-btn:hover{background:rgba(124,108,255,.2);transform:translateY(-1px)}
+.icon-btn svg{width:16px;height:16px}
+.icon-btn.check.done{background:linear-gradient(135deg,var(--primary),var(--accent));border-color:transparent}
+.empty{text-align:center;padding:34px 18px;color:var(--muted)}
+.empty svg{width:44px;height:44px;opacity:.4;margin-bottom:12px}
+.empty h4{font-size:15px;color:var(--text);margin-bottom:6px}
+.empty p{font-size:13px;line-height:1.6;max-width:300px;margin:0 auto}
+/* energy curve */
+.curve-box{position:relative}
+.curve-legend{display:flex;gap:14px;font-size:11.5px;color:var(--muted);margin-top:10px;flex-wrap:wrap}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px}
+#curve{width:100%;height:auto;display:block}
+/* timeline */
+.tl{position:relative;margin-top:6px;padding-left:26px}
+.tl::before{content:'';position:absolute;left:8px;top:8px;bottom:8px;width:2px;background:linear-gradient(180deg,var(--accent),rgba(67,59,255,.08));border-radius:2px}
+.block{position:relative;background:rgba(255,255,255,.04);border:1px solid var(--card-border);border-radius:14px;padding:13px 14px;margin-bottom:12px;cursor:pointer;transition:transform .15s,border .2s;animation:rise .45s both}
+.block:hover{transform:translateX(3px);border-color:rgba(124,108,255,.45)}
+.block::before{content:'';position:absolute;left:-24px;top:20px;width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent);border:2px solid var(--bg)}
+.block.done{opacity:.5}
+.block.done .blk-title{text-decoration:line-through}
+.blk-time{font-size:11.5px;font-weight:700;color:var(--secondary);letter-spacing:.3px;margin-bottom:5px}
+.blk-title{font-size:14.5px;font-weight:700}
+.blk-row{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap;align-items:center}
+.gap-note{text-align:center;font-size:11.5px;color:var(--faint);padding:4px 0;letter-spacing:.3px}
+/* summary */
+.summary{background:linear-gradient(135deg,rgba(47,39,206,.22),rgba(67,59,255,.08));border:1px solid rgba(124,108,255,.35);border-radius:14px;padding:14px 16px;font-size:13.5px;line-height:1.65;margin-top:12px;animation:rise .5s both}
+.summary strong{color:#d9d5ff}
+/* stats */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.stat{background:var(--card);border:1px solid var(--card-border);border-radius:16px;padding:16px;backdrop-filter:blur(12px);animation:rise .5s both}
+.stat .n{font-size:27px;font-weight:800;letter-spacing:-.5px}
+.stat .l{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45}
+.bar-chart{display:flex;align-items:flex-end;gap:8px;height:130px;padding-top:8px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.bar{width:100%;max-width:34px;border-radius:7px 7px 3px 3px;background:linear-gradient(180deg,var(--accent),var(--primary));min-height:4px;animation:grow .6s cubic-bezier(.2,.9,.3,1.2) both;position:relative}
+@keyframes grow{from{transform:scaleY(0);transform-origin:bottom}to{transform:scaleY(1)}}
+.bar.zero{background:rgba(255,255,255,.08)}
+.bar-lbl{font-size:10.5px;color:var(--faint);font-weight:600}
+.bar-val{font-size:10.5px;color:var(--muted);font-weight:700}
+/* tabs */
+.tab{display:none}
+.tab.active{display:block;animation:fadein .3s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+nav.tabs{position:fixed;bottom:0;left:0;right:0;z-index:40;background:rgba(8,6,28,.82);backdrop-filter:blur(18px);border-top:1px solid var(--card-border);display:flex;padding:10px 8px calc(10px + env(safe-area-inset-bottom))}
+.tab-btn{flex:1;background:none;border:none;color:var(--faint);font-family:inherit;font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border-radius:12px;cursor:pointer;transition:all .2s}
+.tab-btn svg{width:21px;height:21px}
+.tab-btn.active{color:#fff;background:rgba(67,59,255,.18)}
+/* onboarding */
+#onb{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;background:rgba(5,3,21,.88);backdrop-filter:blur(10px);padding:20px}
+#onb.show{display:flex}
+.onb-card{width:100%;max-width:420px;background:linear-gradient(160deg,#141038,#0b0826);border:1px solid rgba(124,108,255,.35);border-radius:24px;padding:28px 24px;box-shadow:var(--shadow);animation:rise .5s cubic-bezier(.2,.9,.3,1.15) both;max-height:90vh;overflow-y:auto}
+.onb-step{display:none}
+.onb-step.active{display:block;animation:fadein .35s}
+.onb-card h2{font-size:22px;font-weight:800;letter-spacing:-.4px;margin-bottom:8px}
+.onb-card .lede{font-size:13.5px;color:var(--muted);line-height:1.6;margin-bottom:16px}
+.chrono{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chrono-card{border:1px solid var(--card-border);background:rgba(255,255,255,.04);border-radius:14px;padding:14px 12px;cursor:pointer;text-align:left;font-family:inherit;color:var(--text);transition:all .2s}
+.chrono-card.sel{border-color:var(--accent);background:rgba(67,59,255,.18);box-shadow:0 6px 18px rgba(67,59,255,.3)}
+.chrono-card .ct{font-size:14px;font-weight:700;margin-bottom:4px}
+.chrono-card .cd{font-size:11.5px;color:var(--muted);line-height:1.5}
+.onb-dots{display:flex;gap:7px;justify-content:center;margin:18px 0}
+.onb-dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.18)}
+.onb-dots i.on{background:var(--accent);width:24px;border-radius:99px;transition:all .3s}
+.how{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start}
+.how .hn{width:30px;height:30px;flex-shrink:0;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--accent));display:grid;place-items:center;font-weight:800;font-size:14px}
+.how .ht{font-size:13px;line-height:1.6;color:var(--secondary)}
+.how .ht b{color:#fff}
+/* modal */
+.modal{position:fixed;inset:0;z-index:90;display:none;align-items:flex-end;justify-content:center;background:rgba(5,3,21,.7);backdrop-filter:blur(6px);padding:0}
+.modal.show{display:flex}
+.sheet{width:100%;max-width:480px;background:#100c33;border:1px solid var(--card-border);border-bottom:none;border-radius:22px 22px 0 0;padding:22px 20px calc(24px + env(safe-area-inset-bottom));animation:sheetup .32s cubic-bezier(.2,.9,.3,1.1) both;max-height:82vh;overflow-y:auto}
+@keyframes sheetup{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}
+.sheet h3{font-size:17px;font-weight:800;margin-bottom:4px}
+.sheet .ss{font-size:12.5px;color:var(--muted);margin-bottom:14px}
+.sheet .btn{margin-bottom:10px}
+.grab{width:44px;height:5px;border-radius:99px;background:rgba(255,255,255,.2);margin:0 auto 16px}
+/* focus */
+#focus{position:fixed;inset:0;z-index:110;display:none;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 30%,#141038,#050315 75%);padding:24px;text-align:center}
+#focus.show{display:flex}
+.ring{position:relative;width:250px;height:250px;margin:26px auto}
+.ring svg{transform:rotate(-90deg)}
+.ring .rt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .rt .t{font-size:52px;font-weight:800;letter-spacing:-2px;font-variant-numeric:tabular-nums}
+.ring .rt .s{font-size:12px;color:var(--muted);margin-top:6px}
+#focus h2{font-size:20px;font-weight:800;max-width:340px;line-height:1.4}
+.f-controls{display:flex;gap:12px;margin-top:8px}
+.f-controls .icon-btn{width:56px;height:56px;border-radius:18px}
+.f-controls .icon-btn svg{width:22px;height:22px}
+.f-done{display:none;margin-top:20px;animation:rise .5s both}
+.f-done.show{display:block}
+#toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:#1c1650;border:1px solid rgba(124,108,255,.5);color:#fff;padding:12px 20px;border-radius:14px;font-size:13.5px;font-weight:600;opacity:0;pointer-events:none;transition:all .3s;z-index:120;max-width:88vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%)}
+.info{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:rgba(124,108,255,.25);color:#c9c3ff;font-size:10px;font-weight:800;cursor:help;vertical-align:1px;margin-left:4px;font-style:normal}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.set-row:last-child{border-bottom:none}
+.set-row .sl{font-size:14px;font-weight:600}
+.set-row .sd{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
+.set-row input[type=time]{width:110px;padding:9px 10px;font-size:14px}
+.danger-zone{border:1px solid rgba(248,113,113,.3);border-radius:14px;padding:6px 14px;margin-top:14px;background:rgba(248,113,113,.05)}
+.timegrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(min-width:560px){.stat-grid{grid-template-columns:1fr 1fr 1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="mesh"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+
+<header class="top wrap">
+  <div class="brand">
+    <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg></div>
+    <h1>Peak<span>Plan</span></h1>
+  </div>
+  <div class="streak-chip" title="Consecutive days with at least one task completed">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2.2" stroke-linecap="round"><path d="M12 2c1 4-3 5-3 9a4.5 4.5 0 0 0 9 0c0-2-1-3.5-2-5-.5 1.5-1.5 2-2.5 2C13 6 13 4 12 2z"/><path d="M12 22a7 7 0 0 1-7-7"/></svg>
+    <span id="streakTop">0 day streak</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- PLAN TAB -->
+  <section class="tab active" id="tab-plan">
+    <div class="hero">
+      <h2 id="greet">Good day.</h2>
+      <p>PeakPlan places your hardest work inside your natural energy peaks — so demanding tasks feel easier and easy tasks fill the quiet hours.</p>
+    </div>
+    <div class="card">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="#a5a0ff" stroke-width="2" stroke-linecap="round"><path d="M3 20h18"/><path d="M4 16c2-5 4-8 8-8s6 3 8 8"/></svg>Your energy curve today</h3>
+      <p class="sub">Computed from your chronotype and peak hours. Tasks scheduled on the high parts of the curve cost less willpower.</p>
+      <div class="curve-box"><svg id="curve" viewBox="0 0 600 220" role="img" aria-label="Energy level across the day"></svg></div>
+      <div class="curve-legend">
+        <span><i class="dot" style="background:#433bff"></i>Energy level</span>
+        <span><i class="dot" style="background:#fbbf24"></i>Your peak window</span>
+        <span><i class="dot" style="background:#34d399"></i>Right now</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="#a5a0ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/><circle cx="12" cy="12" r="3.2"/></svg>Auto-plan my day</h3>
+      <p class="sub">High-energy tasks go into your peak window first. Must-do tasks get placed before Shoulds and Nices. Every block gets a 15-minute breather after it — no back-to-back marathons.</p>
+      <button class="btn btn-primary" id="autoPlanBtn"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>Auto-Plan My Day</button>
+      <div id="planSummary"></div>
+    </div>
+    <div class="card">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="#a5a0ff" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="4" cy="6" r="1.4" fill="#a5a0ff"/><circle cx="4" cy="12" r="1.4" fill="#a5a0ff"/><circle cx="4" cy="18" r="1.4" fill="#a5a0ff"/></svg>Today's schedule</h3>
+      <p class="sub">Tap any block for actions — start a focus session, mark it done, move it, or send it back to the inbox.</p>
+      <div id="timeline"></div>
+    </div>
+  </section>
+
+  <!-- INBOX TAB -->
+  <section class="tab" id="tab-inbox">
+    <div class="hero">
+      <h2>Task inbox</h2>
+      <p>Dump everything here first. The planner will figure out <em>when</em> each task belongs.</p>
+    </div>
+    <div class="card">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="#a5a0ff" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span id="formTitle">Add a task</span></h3>
+      <label class="f" for="tTitle">Task title</label>
+      <input type="text" id="tTitle" placeholder="e.g. Draft the project proposal" maxlength="90">
+      <label class="f">Estimated duration</label>
+      <div class="chip-row" id="durChips"></div>
+      <label class="f">Priority <i class="info" title="Must = the day is a failure without it. Should = important but survivable. Nice = bonus if time allows.">i</i></label>
+      <div class="seg" id="prioSeg"></div>
+      <label class="f">Energy demand <i class="info" title="High energy = needs deep thinking, like writing, coding or hard decisions. Low energy = admin, email, errands you can do half-asleep.">i</i></label>
+      <div class="seg" id="energySeg"></div>
+      <p class="hint">Energy demand is the secret sauce: PeakPlan protects your peak hours for High-energy work and fills low-energy dips with easy wins.</p>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn btn-primary" id="saveTaskBtn" style="flex:1">Add task</button>
+        <button class="btn btn-ghost" id="cancelEditBtn" style="display:none">Cancel</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="#a5a0ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.7 4H7.3a2 2 0 0 0-1.8 1.1z"/></svg>Waiting to be scheduled <span id="inboxCount" style="color:var(--faint);font-weight:600"></span></h3>
+      <div id="inboxList"></div>
+    </div>
+  </section>
+
+  <!-- STATS TAB -->
+  <section class="tab" id="tab-stats">
+    <div class="hero">
+      <h2>Your progress</h2>
+      <p>Proof that planning around your energy actually works. Numbers update the moment you complete a task.</p>
+    </div>
+    <div class="stat-grid">
+      <div class="stat"><div class="n" id="stToday">0%</div><div class="l">Today's completion — tasks finished out of everything on your plate</div></div>
+      <div class="stat"><div class="n" id="stDone">0</div><div class="l">Tasks completed today</div></div>
+      <div class="stat"><div class="n" id="stPeak">0</div><div class="l">Peak-hour hits — high-energy tasks finished inside your peak window</div></div>
+      <div class="stat"><div class="n" id="stStreak">0</div><div class="l">Day streak — consecutive days with at least one task done</div></div>
+    </div>
+    <div class="card">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="#a5a0ff" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Last 7 days</h3>
+      <p class="sub">Tasks completed per day. Consistency beats intensity.</p>
+      <div class="bar-chart" id="weekChart"></div>
+    </div>
+    <div class="card">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="#a5a0ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>How to read this</h3>
+      <p class="sub" style="margin:0">A <b>peak-hour hit</b> means you finished a demanding task during the hours your brain is naturally sharpest — that's the whole game. Aim for more amber blocks landing in the gold window.</p>
+    </div>
+  </section>
+
+  <!-- SETTINGS TAB -->
+  <section class="tab" id="tab-settings">
+    <div class="hero">
+      <h2>Settings</h2>
+      <p>Tune your day to your biology. Changes apply to the energy curve and the next auto-plan.</p>
+    </div>
+    <div class="card">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="#a5a0ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1h.1a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Your rhythm</h3>
+      <div class="set-row"><div><div class="sl">Display name</div><div class="sd">Used only in greetings, stays on this device.</div></div><input type="text" id="setName" maxlength="24" style="width:130px"></div>
+      <div class="set-row"><div><div class="sl">Chronotype</div><div class="sd" id="chronoDesc">Your natural energy pattern.</div></div><button class="btn btn-ghost btn-sm" id="changeChrono">Change</button></div>
+      <div class="timegrid">
+        <div><label class="f">Wake up</label><input type="time" id="setWake"></div>
+        <div><label class="f">Sleep</label><input type="time" id="setSleep"></div>
+        <div><label class="f">Peak hours start</label><input type="time" id="setPeakS"></div>
+        <div><label class="f">Peak hours end</label><input type="time" id="setPeakE"></div>
+      </div>
+      <p class="hint">Your peak window is when your focus is naturally strongest — PeakPlan schedules High-energy tasks here first.</p>
+    </div>
+    <div class="card">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="#a5a0ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Your data</h3>
+      <p class="sub">Everything lives in this browser's local storage. Nothing is uploaded, tracked or shared.</p>
+      <button class="btn btn-ghost" id="exportBtn" style="width:100%;margin-bottom:10px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Download my data (JSON)</button>
+      <div class="danger-zone">
+        <div class="set-row"><div><div class="sl">Reset day</div><div class="sd">Clear today's plan and mark all tasks as not done.</div></div><button class="btn btn-ghost btn-sm" id="resetDayBtn">Reset</button></div>
+        <div class="set-row"><div><div class="sl" style="color:var(--red)">Clear all data</div><div class="sd">Delete tasks, plans, history and settings. This cannot be undone.</div></div><button class="btn btn-danger btn-sm" id="clearAllBtn">Clear</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="#a5a0ff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>About PeakPlan</h3>
+      <p class="sub" style="margin:0">Built by <b>Abhiram Unni</b>. PeakPlan matches task difficulty to your natural energy rhythm: demanding work lands in peak hours, light work fills the dips. One HTML file, no backend, no account, works offline.</p>
+    </div>
+  </section>
+</main>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>Plan</button>
+  <button class="tab-btn" data-tab="inbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.7 4H7.3a2 2 0 0 0-1.8 1.1z"/></svg>Inbox</button>
+  <button class="tab-btn" data-tab="stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Stats</button>
+  <button class="tab-btn" data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1h.1a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings</button>
+</nav>
+
+<!-- ONBOARDING -->
+<div id="onb">
+  <div class="onb-card">
+    <div class="onb-step active" data-step="1">
+      <h2>Welcome to PeakPlan</h2>
+      <p class="lede">Stop fighting your energy. PeakPlan learns when your brain is sharpest and schedules demanding work into those hours. First, what should we call you?</p>
+      <label class="f">Your name (optional)</label>
+      <input type="text" id="onbName" placeholder="e.g. Nandu" maxlength="24">
+      <p class="hint">Used only for greetings, stored on this device.</p>
+    </div>
+    <div class="onb-step" data-step="2">
+      <h2>When are you sharpest?</h2>
+      <p class="lede">Pick the pattern closest to your natural rhythm. You can fine-tune exact hours later in Settings.</p>
+      <div class="chrono" id="chronoPick">
+        <button class="chrono-card" data-c="lark"><div class="ct">Morning Lark</div><div class="cd">Sharpest 8–11 AM. Early to bed, early to rise.</div></button>
+        <button class="chrono-card" data-c="steady"><div class="ct">Day Steady</div><div class="cd">Sharpest 10 AM–1 PM. Even energy, midday peak.</div></button>
+        <button class="chrono-card" data-c="owl"><div class="ct">Night Owl</div><div class="cd">Sharpest 8–11 PM. Your brain wakes up after dinner.</div></button>
+        <button class="chrono-card" data-c="custom"><div class="ct">Custom</div><div class="cd">You know your peak hours — set them yourself.</div></button>
+      </div>
+      <div id="customPeak" style="display:none;margin-top:12px" class="timegrid">
+        <div><label class="f">Peak start</label><input type="time" id="onbPeakS" value="09:00"></div>
+        <div><label class="f">Peak end</label><input type="time" id="onbPeakE" value="12:00"></div>
+      </div>
+    </div>
+    <div class="onb-step" data-step="3">
+      <h2>How it works</h2>
+      <div class="how"><div class="hn">1</div><div class="ht"><b>Dump tasks</b> into your inbox with a duration, priority and energy demand. "High energy" means deep-thinking work like writing or coding.</div></div>
+      <div class="how"><div class="hn">2</div><div class="ht"><b>Tap Auto-Plan.</b> PeakPlan slots demanding tasks into your peak hours, easy tasks into your dips, with 15-minute breathers between blocks.</div></div>
+      <div class="how"><div class="hn">3</div><div class="ht"><b>Work the plan.</b> Tap any block to start a distraction-free focus timer, mark it done, or move it. Your stats and streak update automatically.</div></div>
+    </div>
+    <div class="onb-dots"><i class="on"></i><i></i><i></i></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" id="onbBack" style="display:none">Back</button>
+      <button class="btn btn-primary" id="onbNext" style="flex:1">Continue</button>
+    </div>
+    <button class="btn btn-ghost" id="onbSkip" style="width:100%;margin-top:10px;background:none;border:none;color:var(--faint)">Skip for now</button>
+  </div>
+</div>
+
+<!-- BLOCK ACTION SHEET -->
+<div class="modal" id="blockModal"><div class="sheet">
+  <div class="grab"></div>
+  <h3 id="bmTitle">Task</h3>
+  <p class="ss" id="bmSub"></p>
+  <button class="btn btn-primary" id="bmFocus"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/></svg>Start focus session</button>
+  <button class="btn btn-ghost" id="bmDone" style="width:100%">Mark as done</button>
+  <div style="display:flex;gap:10px">
+    <button class="btn btn-ghost" id="bmEarlier" style="flex:1">Shift earlier</button>
+    <button class="btn btn-ghost" id="bmLater" style="flex:1">Shift later</button>
+  </div>
+  <button class="btn btn-ghost" id="bmUnplan" style="width:100%">Send back to inbox</button>
+  <button class="btn btn-ghost" id="bmClose" style="width:100%;background:none;border:none;color:var(--faint)">Close</button>
+</div></div>
+
+<!-- CHRONOTYPE CHANGE SHEET -->
+<div class="modal" id="chronoModal"><div class="sheet">
+  <div class="grab"></div>
+  <h3>Change chronotype</h3>
+  <p class="ss">This resets your wake, sleep and peak hours to the preset. Fine-tune afterwards in Settings.</p>
+  <div class="chrono" id="chronoPick2" style="grid-template-columns:1fr">
+    <button class="chrono-card" data-c="lark"><div class="ct">Morning Lark</div><div class="cd">Wake 6:00 AM · Sleep 10:00 PM · Peak 8–11 AM</div></button>
+    <button class="chrono-card" data-c="steady"><div class="ct">Day Steady</div><div class="cd">Wake 7:00 AM · Sleep 11:00 PM · Peak 10 AM–1 PM</div></button>
+    <button class="chrono-card" data-c="owl"><div class="ct">Night Owl</div><div class="cd">Wake 9:00 AM · Sleep 1:00 AM · Peak 8–11 PM</div></button>
+  </div>
+  <button class="btn btn-ghost" id="cmClose" style="width:100%;margin-top:12px;background:none;border:none;color:var(--faint)">Cancel</button>
+</div></div>
+
+<!-- FOCUS -->
+<div id="focus">
+  <p style="font-size:12px;letter-spacing:2px;color:var(--faint);font-weight:700">FOCUS SESSION</p>
+  <h2 id="fTitle">Task</h2>
+  <div class="ring">
+    <svg width="250" height="250" viewBox="0 0 250 250">
+      <circle cx="125" cy="125" r="108" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="14"/>
+      <circle id="ringProg" cx="125" cy="125" r="108" fill="none" stroke="url(#rg)" stroke-width="14" stroke-linecap="round" stroke-dasharray="678.6" stroke-dashoffset="0"/>
+      <defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2f27ce"/><stop offset="1" stop-color="#433bff"/></linearGradient></defs>
+    </svg>
+    <div class="rt"><div class="t" id="fTime">25:00</div><div class="s" id="fState">Ready</div></div>
+  </div>
+  <div class="f-controls">
+    <button class="icon-btn" id="fToggle" title="Pause / resume"><svg id="fToggleIcon" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 8.5v7l6-3.5z"/></svg></button>
+    <button class="icon-btn" id="fReset" title="Reset timer"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button>
+    <button class="icon-btn" id="fExit" title="Leave focus session"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="f-done" id="fDone">
+    <h3 style="font-size:19px;margin-bottom:6px">Session complete. Well done.</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px">You gave it your full attention — that's what peak hours are for.</p>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button class="btn btn-primary" id="fMarkDone" style="width:auto;padding:12px 24px">Mark task done</button>
+      <button class="btn btn-ghost" id="fBackBtn">Back to plan</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script>
+'use strict';
+/* ============================== STORAGE ============================== */
+const KEY = 'peakplan_v1';
+const CHRONOS = {
+  lark:  { label:'Morning Lark', wake:'06:00', sleep:'22:00', peakS:'08:00', peakE:'11:00' },
+  steady:{ label:'Day Steady',   wake:'07:00', sleep:'23:00', peakS:'10:00', peakE:'13:00' },
+  owl:   { label:'Night Owl',    wake:'09:00', sleep:'01:00', peakS:'20:00', peakE:'23:00' }
+};
+function uid(){ return 't'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function todayKey(d){ d = d || new Date(); const p = n => String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+function defaultState(){
+  return { profile:{ name:'', chrono:'steady', wake:'07:00', sleep:'23:00', peakS:'10:00', peakE:'13:00', onboarded:false },
+           tasks:[], plan:{ date:'', items:[] }, history:{} };
+}
+function load(){
+  try{ const raw = localStorage.getItem(KEY); if(!raw) return defaultState();
+    const s = JSON.parse(raw); const d = defaultState();
+    s.profile = Object.assign(d.profile, s.profile||{});
+    s.tasks = Array.isArray(s.tasks)?s.tasks:[];
+    s.plan = s.plan && typeof s.plan==='object' ? s.plan : d.plan;
+    s.history = (s.history && typeof s.history==='object') ? s.history : {};
+    return s;
+  }catch(e){ return defaultState(); }
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+let state = load();
+
+/* ============================== TIME HELPERS ============================== */
+function toMin(t){ const p = String(t).split(':'); return (+p[0])*60 + (+p[1]||0); }
+function toHHMM(m){ m = ((m%1440)+1440)%1440; const h=Math.floor(m/60), mm=m%60;
+  const ap = h<12?'AM':'PM'; const h12 = h%12===0?12:h%12;
+  return h12+':'+String(mm).padStart(2,'0')+' '+ap; }
+function toInput(m){ m=((m%1440)+1440)%1440; return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'); }
+function normSleep(wake, sleep){ return sleep<=wake ? sleep+1440 : sleep; } // sleep may be past midnight
+
+/* ============================== ENERGY MODEL ============================== */
+// energy 0..1 at minute-of-day m (m may exceed 1440 for post-midnight days)
+function energyAt(m){
+  const p = state.profile;
+  let ps = toMin(p.peakS), pe = toMin(p.peakE);
+  if(pe<=ps) pe+=1440;
+  const mid = (ps+pe)/2, width = Math.max(60,(pe-ps))/2;
+  m = ((m%1440)+1440)%1440;
+  const midN = ((mid%1440)+1440)%1440;
+  let d = Math.abs(m-midN); d = Math.min(d, 1440-d); // circular distance
+  const gauss = Math.exp(-Math.pow(d/width,2)*1.6);
+  // gentle daily rhythm: mild lift after wake, dip ~7h after wake
+  const wake = toMin(p.wake);
+  const m2 = (m-wake+1440)%1440;
+  const dip = -0.18*Math.exp(-Math.pow((m2-420)/120,2));
+  const base = 0.42 + 0.5*gauss + dip;
+  return Math.max(0.08, Math.min(1, base));
+}
+function energyLabel(e){ return e>=0.62?'High':(e>=0.38?'Medium':'Low'); }
+function blockEnergyBadge(startMin){
+  const e = energyLabel(energyAt(startMin));
+  const cls = e==='High'?'b-hi':(e==='Medium'?'b-md':'b-lo');
+  const bolt = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>';
+  return '<span class="badge '+cls+'" title="Your energy at this time is '+e.toLowerCase()+'">'+bolt+e+' energy</span>';
+}
+function inPeak(startMin, endMin){
+  let ps = toMin(state.profile.peakS), pe = toMin(state.profile.peakE);
+  if(pe<=ps) pe+=1440;
+  for(const off of [0,1440]){ // block may live past midnight in wake..sleep space
+    const ovS = Math.max(startMin+off, ps), ovE = Math.min(endMin+off, pe);
+    if(ovE > ovS) return true;
+  }
+  return false;
+}
+
+/* ============================== UI HELPERS ============================== */
+const $ = id => document.getElementById(id);
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2600); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.id==='tab-'+name));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+
+/* ============================== ENERGY CURVE ============================== */
+function drawCurve(){
+  const svg = $('curve'); const p = state.profile;
+  const wake = toMin(p.wake), sleep = normSleep(wake, toMin(p.sleep));
+  const W=600,H=220,PL=34,PR=10,PT=16,PB=30;
+  const X = m => PL + ((m-wake)/(sleep-wake))*(W-PL-PR);
+  const Y = e => PT + (1-e)*(H-PT-PB);
+  let d='';
+  const steps=120;
+  for(let i=0;i<=steps;i++){ const m=wake+(sleep-wake)*i/steps; const e=energyAt(m);
+    d += (i===0?'M':'L')+X(m).toFixed(1)+','+Y(e).toFixed(1)+' '; }
+  // peak window shading
+  let ps=toMin(p.peakS), pe=toMin(p.peakE);
+  if(pe<=ps) pe+=1440;
+  const px1=X(Math.max(ps,wake)), px2=X(Math.min(pe,sleep));
+  // now line
+  const now = new Date(); const nowM = now.getHours()*60+now.getMinutes();
+  const nowIn = nowM>=wake && nowM<=sleep ? X(nowM) : null;
+  let html='';
+  if(px2>px1) html+='<rect x="'+px1.toFixed(1)+'" y="'+PT+'" width="'+(px2-px1).toFixed(1)+'" height="'+(H-PT-PB)+'" fill="rgba(251,191,36,.10)" rx="6"/>';
+  html+='<path d="'+d+'L'+X(sleep).toFixed(1)+','+Y(0.08).toFixed(1)+'L'+X(wake).toFixed(1)+','+Y(0.08).toFixed(1)+' Z" fill="url(#cg)" opacity=".55"/>';
+  html+='<path d="'+d+'" fill="none" stroke="#7c6cff" stroke-width="3" stroke-linecap="round"/>';
+  // peak marker dot at curve max inside window
+  const mid=(ps+pe)/2; html+='<circle cx="'+X(mid).toFixed(1)+'" cy="'+Y(energyAt(mid)).toFixed(1)+'" r="6" fill="#fbbf24"><animate attributeName="r" values="6;8;6" dur="2s" repeatCount="indefinite"/></circle>';
+  if(nowIn!==null) html+='<line x1="'+nowIn.toFixed(1)+'" y1="'+PT+'" x2="'+nowIn.toFixed(1)+'" y2="'+(H-PB)+'" stroke="#34d399" stroke-width="2" stroke-dasharray="5 4"/><circle cx="'+nowIn.toFixed(1)+'" cy="'+PT+'" r="4" fill="#34d399"/>';
+  // hour ticks every 2h
+  html+='<g font-size="10" fill="rgba(251,251,254,.4)" text-anchor="middle" font-family="Inter">';
+  for(let m=Math.ceil(wake/120)*120; m<=sleep; m+=120){ html+='<text x="'+X(m).toFixed(1)+'" y="'+(H-10)+'">'+toHHMM(m).replace(':00 ',' ')+'</text>'; }
+  html+='</g>';
+  html+='<defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#433bff" stop-opacity=".7"/><stop offset="1" stop-color="#433bff" stop-opacity="0"/></linearGradient></defs>';
+  svg.innerHTML=html;
+}
+
+/* ============================== INBOX ============================== */
+const DURS=[15,30,45,60,90,120];
+const PRIOS=[{id:'must',label:'Must',hint:'The day fails without it'},{id:'should',label:'Should',hint:'Important, but survivable'},{id:'nice',label:'Nice',hint:'Bonus if time allows'}];
+const ENERGIES=[{id:'high',label:'High',hint:'Deep thinking — writing, coding, hard decisions'},{id:'med',label:'Medium',hint:'Normal focus — calls, planning, learning'},{id:'low',label:'Low',hint:'Easy wins — email, admin, errands'}];
+let fDur=30, fPrio='should', fEnergy='med', editingId=null;
+
+function buildFormChips(){
+  $('durChips').innerHTML = DURS.map(d=>'<button class="chip'+(d===fDur?' sel':'')+'" data-d="'+d+'">'+d+' min</button>').join('');
+  $('durChips').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{ fDur=+c.dataset.d;
+    $('durChips').querySelectorAll('.chip').forEach(x=>x.classList.toggle('sel',x===c)); }));
+  $('prioSeg').innerHTML = PRIOS.map(p=>'<button class="chip'+(p.id===fPrio?' sel':'')+'" data-p="'+p.id+'" title="'+esc(p.hint)+'">'+p.label+'</button>').join('');
+  $('prioSeg').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{ fPrio=c.dataset.p;
+    $('prioSeg').querySelectorAll('.chip').forEach(x=>x.classList.toggle('sel',x===c)); }));
+  $('energySeg').innerHTML = ENERGIES.map(p=>'<button class="chip'+(p.id===fEnergy?' sel':'')+'" data-e="'+p.id+'" title="'+esc(p.hint)+'">'+p.label+'</button>').join('');
+  $('energySeg').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{ fEnergy=c.dataset.e;
+    $('energySeg').querySelectorAll('.chip').forEach(x=>x.classList.toggle('sel',x===c)); }));
+}
+function prioBadge(p){ const m={must:['p-must','Must'],should:['p-should','Should'],nice:['p-nice','Nice']}[p]||['p-nice',p];
+  return '<span class="badge '+m[0]+'">'+m[1]+'</span>'; }
+function energyBadgeReq(e){ const m={high:['b-hi','High energy'],med:['b-md','Medium energy'],low:['b-lo','Low energy']}[e]||['b-md',e];
+  return '<span class="badge '+m[0]+'" title="This task needs '+m[1].toLowerCase()+' from you">'+m[1]+'</span>'; }
+
+function saveTask(){
+  const title=$('tTitle').value.trim();
+  if(!title){ toast('Give your task a title first.'); $('tTitle').focus(); return; }
+  if(editingId){
+    const t=state.tasks.find(x=>x.id===editingId);
+    if(t){ t.title=title; t.duration=fDur; t.prio=fPrio; t.energy=fEnergy; }
+    editingId=null; $('formTitle').textContent='Add a task'; $('saveTaskBtn').textContent='Add task'; $('cancelEditBtn').style.display='none';
+    toast('Task updated.');
+  } else {
+    state.tasks.push({ id:uid(), title:title, duration:fDur, prio:fPrio, energy:fEnergy, done:false, doneDate:null, peakHit:false });
+    toast('Added to your inbox. Hit Auto-Plan when ready.');
+  }
+  $('tTitle').value='';
+  save(); renderAll();
+}
+function renderInbox(){
+  const plannedIds = new Set(state.plan.items.map(i=>i.taskId));
+  const list = state.tasks.filter(t=>!t.done && !plannedIds.has(t.id));
+  $('inboxCount').textContent = list.length? '('+list.length+')':'';
+  const box=$('inboxList');
+  if(!list.length){
+    box.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.7 4H7.3a2 2 0 0 0-1.8 1.1z"/></svg><h4>Your inbox is clear</h4><p>Add a task above and it will wait here until Auto-Plan finds it the perfect slot.</p></div>';
+    return;
+  }
+  box.innerHTML=list.map((t,i)=>'<div class="task" style="animation-delay:'+(i*0.05)+'s">'+
+    '<div class="t-main"><div class="t-title">'+esc(t.title)+'</div><div class="t-meta">'+
+    '<span class="t-dur"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'+t.duration+' min</span>'+
+    prioBadge(t.prio)+energyBadgeReq(t.energy)+'</div></div>'+
+    '<button class="icon-btn" data-act="edit" data-id="'+t.id+'" title="Edit task"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></button>'+
+    '<button class="icon-btn" data-act="del" data-id="'+t.id+'" title="Delete task"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>'+
+  '</div>').join('');
+  box.querySelectorAll('.icon-btn').forEach(b=>b.addEventListener('click',()=>{
+    const id=b.dataset.id, t=state.tasks.find(x=>x.id===id); if(!t) return;
+    if(b.dataset.act==='del'){ if(confirm('Delete "'+t.title+'"?')){ state.tasks=state.tasks.filter(x=>x.id!==id); save(); renderAll(); toast('Task deleted.'); } }
+    else { editingId=id; $('tTitle').value=t.title; fDur=t.duration; fPrio=t.prio; fEnergy=t.energy; buildFormChips();
+      $('formTitle').textContent='Edit task'; $('saveTaskBtn').textContent='Save changes'; $('cancelEditBtn').style.display='';
+      window.scrollTo({top:0,behavior:'smooth'}); }
+  }));
+}
+$('saveTaskBtn').addEventListener('click', saveTask);
+$('cancelEditBtn').addEventListener('click', ()=>{ editingId=null; $('tTitle').value=''; $('formTitle').textContent='Add a task'; $('saveTaskBtn').textContent='Add task'; $('cancelEditBtn').style.display='none'; });
+$('tTitle').addEventListener('keydown', e=>{ if(e.key==='Enter') saveTask(); });
+
+/* ============================== SCHEDULER ============================== */
+const GAP=15;
+function rollPlanIfNewDay(){
+  if(state.plan.date !== todayKey()){ state.plan={date:todayKey(),items:[]}; save(); }
+}
+function autoPlan(){
+  rollPlanIfNewDay();
+  const plannedIds=new Set(state.plan.items.map(i=>i.taskId));
+  const pool=state.tasks.filter(t=>!t.done && !plannedIds.has(t.id));
+  if(!pool.length){ toast('Nothing to plan — your inbox is empty.'); return; }
+  const pw={must:3,should:2,nice:1}, ew={high:3,med:2,low:1};
+  pool.sort((a,b)=> (pw[b.prio]-pw[a.prio]) || (ew[b.energy]-ew[a.energy]) || (b.duration-a.duration));
+  const p=state.profile;
+  const wake=toMin(p.wake), sleep=normSleep(wake,toMin(p.sleep));
+  let ps=toMin(p.peakS), pe=toMin(p.peakE); if(pe<=ps) pe+=1440;
+  const items=state.plan.items.slice();
+  const occupied=items.map(i=>({s:i.start,e:i.end}));
+  function freeAt(s,dur){
+    const e=s+dur;
+    if(s<wake||e>sleep) return false;
+    return !occupied.some(o=> s < o.e+GAP && e+GAP > o.s);
+  }
+  function findSlot(task){
+    const regions = task.energy==='high' ? [[ps,pe],[wake,sleep]] : [[wake,sleep]];
+    for(const [rs,re] of regions){
+      for(let s=rs; s+task.duration<=re; s+=15){
+        if(freeAt(s,task.duration)) return s;
+      }
+    }
+    return null;
+  }
+  let placed=0, hiInPeak=0; const unfit=[];
+  for(const t of pool){
+    const s=findSlot(t);
+    if(s===null){ unfit.push(t); continue; }
+    items.push({taskId:t.id,start:s,end:s+t.duration});
+    occupied.push({s:s,e:s+t.duration});
+    placed++;
+    if(t.energy==='high' && inPeak(s,s+t.duration)) hiInPeak++;
+  }
+  items.sort((a,b)=>a.start-b.start);
+  state.plan={date:todayKey(),items:items};
+  save(); renderAll();
+  const totalHrs=((sleep-wake)/60).toFixed(0);
+  let msg='<strong>'+placed+' task'+(placed===1?'':'s')+' scheduled</strong> between '+toHHMM(wake)+' and '+toHHMM(sleep%1440)+'. ';
+  if(hiInPeak) msg+=hiInPeak+' high-energy task'+(hiInPeak===1?'':'s')+' landed in your '+toHHMM(ps)+'–'+toHHMM(pe>1440?pe-1440:pe)+' peak window — your sharpest hours are protected. ';
+  if(unfit.length) msg+=' <strong>'+unfit.length+' didn\'t fit</strong> today ('+unfit.map(t=>esc(t.title)).join(', ')+') — try shorter durations or a longer day.';
+  else msg+='Everything fit. Nice.';
+  $('planSummary').innerHTML='<div class="summary">'+msg+'</div>';
+  toast('Day planned: '+placed+' task'+(placed===1?'':'s')+' scheduled.');
+}
+
+/* ============================== TIMELINE ============================== */
+let activeBlockTask=null;
+function renderPlan(){
+  rollPlanIfNewDay();
+  const box=$('timeline');
+  const items=state.plan.items;
+  if(!items.length){
+    box.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><h4>Your day is a blank canvas</h4><p>Add tasks to your inbox, then tap <b>Auto-Plan My Day</b> and watch them land in the right hours.</p></div>';
+    return;
+  }
+  let html='';
+  items.forEach((it,idx)=>{
+    const t=state.tasks.find(x=>x.id===it.taskId); if(!t) return;
+    html+='<div class="block'+(t.done?' done':'')+'" data-id="'+t.id+'" style="animation-delay:'+(idx*0.06)+'s">'+
+      '<div class="blk-time">'+toHHMM(it.start)+' – '+toHHMM(it.end)+'</div>'+
+      '<div class="blk-title">'+esc(t.title)+'</div>'+
+      '<div class="blk-row">'+prioBadge(t.prio)+energyBadgeReq(t.energy)+blockEnergyBadge(it.start)+
+      '<span class="t-dur"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'+t.duration+' min</span></div>'+
+    '</div>';
+    if(idx<items.length-1) html+='<div class="gap-note">· 15 min breather ·</div>';
+  });
+  box.innerHTML=html;
+  box.querySelectorAll('.block').forEach(b=>b.addEventListener('click',()=>openBlockSheet(b.dataset.id)));
+}
+function taskOf(id){ return state.tasks.find(x=>x.id===id); }
+function openBlockSheet(id){
+  const t=taskOf(id); if(!t) return;
+  activeBlockTask=id;
+  const it=state.plan.items.find(i=>i.taskId===id);
+  $('bmTitle').textContent=t.title;
+  $('bmSub').textContent=(it?toHHMM(it.start)+' – '+toHHMM(it.end)+' · ':'')+t.duration+' min · '+(t.done?'Completed':'Tap an action below');
+  $('bmDone').textContent = t.done ? 'Mark as not done' : 'Mark as done';
+  $('blockModal').classList.add('show');
+}
+function closeBlockSheet(){ $('blockModal').classList.remove('show'); activeBlockTask=null; }
+$('bmClose').addEventListener('click', closeBlockSheet);
+$('blockModal').addEventListener('click', e=>{ if(e.target===$('blockModal')) closeBlockSheet(); });
+$('bmDone').addEventListener('click', ()=>{
+  const t=taskOf(activeBlockTask); if(!t) return closeBlockSheet();
+  if(t.done){ t.done=false; t.doneDate=null; toast('Marked as not done.'); }
+  else {
+    const it=state.plan.items.find(i=>i.taskId===t.id);
+    const peakHit = t.energy==='high' && it && inPeak(it.start,it.end);
+    markDone(t, peakHit);
+    toast(peakHit ? 'Done — and it was a peak-hour hit.' : 'Task completed. Nice work.');
+  }
+  closeBlockSheet(); save(); renderAll();
+});
+function bumpHistory(field){
+  const k=todayKey();
+  if(!state.history[k]) state.history[k]={done:0,peakHits:0};
+  state.history[k][field]=(state.history[k][field]||0)+1;
+}
+function markDone(t, peakHit){
+  if(t.done) return;
+  t.done=true; t.doneDate=todayKey(); t.peakHit=!!peakHit;
+  bumpHistory('done'); if(peakHit) bumpHistory('peakHits');
+}
+$('bmUnplan').addEventListener('click', ()=>{
+  state.plan.items=state.plan.items.filter(i=>i.taskId!==activeBlockTask);
+  $('planSummary').innerHTML='';
+  closeBlockSheet(); save(); renderAll(); toast('Sent back to the inbox.');
+});
+function shiftBlock(dir){
+  const it=state.plan.items.find(i=>i.taskId===activeBlockTask); if(!it) return;
+  const ns=it.start+dir*15, dur=it.end-it.start;
+  const p=state.profile, wake=toMin(p.wake), sleep=normSleep(wake,toMin(p.sleep));
+  if(ns<wake||ns+dur>sleep){ toast('That would push it outside your day.'); return; }
+  const clash=state.plan.items.some(o=>o.taskId!==it.taskId && ns < o.end+GAP && ns+dur+GAP > o.start);
+  if(clash){ toast('No room there — another block is in the way.'); return; }
+  it.start=ns; it.end=ns+dur;
+  state.plan.items.sort((a,b)=>a.start-b.start);
+  $('planSummary').innerHTML='';
+  closeBlockSheet(); save(); renderAll(); toast(dir<0?'Moved earlier.':'Moved later.');
+}
+$('bmEarlier').addEventListener('click', ()=>shiftBlock(-1));
+$('bmLater').addEventListener('click', ()=>shiftBlock(1));
+$('bmFocus').addEventListener('click', ()=>{
+  const t=taskOf(activeBlockTask); closeBlockSheet(); if(t) startFocus(t);
+});
+
+/* ============================== FOCUS TIMER ============================== */
+let fTask=null, fTotal=0, fLeft=0, fRun=false, fTick=null, fLast=0;
+function fmt(s){ s=Math.max(0,Math.ceil(s)); return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
+function startFocus(t){
+  fTask=t; fTotal=t.duration*60; fLeft=fTotal; fRun=false;
+  $('fTitle').textContent=t.title;
+  $('fDone').classList.remove('show');
+  updateFocusUI('Ready — tap play to begin.');
+  $('focus').classList.add('show');
+}
+function updateFocusUI(stateTxt){
+  $('fTime').textContent=fmt(fLeft);
+  $('fState').textContent=stateTxt;
+  const frac = fTotal? fLeft/fTotal : 0;
+  $('ringProg').style.strokeDashoffset=(678.6*(1-frac)).toFixed(1);
+  $('fToggleIcon').innerHTML = fRun
+    ? '<path d="M9 5v14M15 5v14"/>'
+    : '<path d="M10 8.5v7l6-3.5z"/>';
+}
+function focusTick(){
+  const now=performance.now();
+  const dt=(now-fLast)/1000; fLast=now;
+  fLeft-=dt;
+  if(fLeft<=0){ fLeft=0; fRun=false; clearInterval(fTick); fTick=null;
+    updateFocusUI('Complete'); $('fDone').classList.add('show'); return; }
+  updateFocusUI('Focusing… stay with it.');
+}
+$('fToggle').addEventListener('click', ()=>{
+  if(fLeft<=0) return;
+  if(fRun){ fRun=false; clearInterval(fTick); fTick=null; updateFocusUI('Paused'); }
+  else { fRun=true; fLast=performance.now(); fTick=setInterval(focusTick,250); updateFocusUI('Focusing… stay with it.'); }
+});
+$('fReset').addEventListener('click', ()=>{ fRun=false; clearInterval(fTick); fTick=null; fLeft=fTotal; $('fDone').classList.remove('show'); updateFocusUI('Ready — tap play to begin.'); });
+$('fExit').addEventListener('click', ()=>{ fRun=false; clearInterval(fTick); fTick=null; $('focus').classList.remove('show'); fTask=null; });
+$('fBackBtn').addEventListener('click', ()=>{ $('focus').classList.remove('show'); fTask=null; });
+$('fMarkDone').addEventListener('click', ()=>{
+  if(fTask && !fTask.done){
+    const it=state.plan.items.find(i=>i.taskId===fTask.id);
+    markDone(fTask, fTask.energy==='high' && it && inPeak(it.start,it.end));
+    save(); renderAll();
+  }
+  $('focus').classList.remove('show'); fTask=null;
+  toast('Task completed. Your stats are updated.');
+});
+
+/* ============================== STATS ============================== */
+function computeStreak(){
+  let streak=0;
+  const d=new Date();
+  if(!(state.history[todayKey()]||{}).done) d.setDate(d.getDate()-1); // today not done yet: start from yesterday
+  while(true){
+    const k=todayKey(d);
+    if((state.history[k]||{}).done>0){ streak++; d.setDate(d.getDate()-1); } else break;
+    if(streak>3650) break;
+  }
+  return streak;
+}
+function renderStats(){
+  const k=todayKey();
+  const doneToday=(state.history[k]||{}).done||0;
+  const peakToday=(state.history[k]||{}).peakHits||0;
+  const pending=state.tasks.filter(t=>!t.done).length;
+  const total=doneToday+pending;
+  $('stToday').textContent = total? Math.round(doneToday/total*100)+'%' : '—';
+  $('stDone').textContent=doneToday;
+  $('stPeak').textContent=peakToday;
+  const streak=computeStreak();
+  $('stStreak').textContent=streak;
+  $('streakTop').textContent=streak+(streak===1?' day streak':' day streak');
+  // 7-day chart
+  const days=[]; const d=new Date();
+  for(let i=6;i>=0;i--){ const dd=new Date(d); dd.setDate(d.getDate()-i); days.push(dd); }
+  const max=Math.max(1,...days.map(dd=>(state.history[todayKey(dd)]||{}).done||0));
+  const names=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  $('weekChart').innerHTML=days.map((dd,i)=>{
+    const v=(state.history[todayKey(dd)]||{}).done||0;
+    const h=v? Math.max(8, v/max*100):4;
+    return '<div class="bar-col"><div class="bar-val">'+v+'</div><div class="bar'+(v?'':' zero')+'" style="height:'+h+'%;animation-delay:'+(i*0.06)+'s" title="'+v+' tasks on '+todayKey(dd)+'"></div><div class="bar-lbl">'+(i===6?'Today':names[dd.getDay()])+'</div></div>';
+  }).join('');
+  // greeting
+  const h=new Date().getHours();
+  const name=state.profile.name? ', '+state.profile.name : '';
+  $('greet').textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+name+'.';
+}
+
+/* ============================== SETTINGS ============================== */
+function renderSettings(){
+  const p=state.profile;
+  $('setName').value=p.name||'';
+  $('setWake').value=toInput(toMin(p.wake));
+  $('setSleep').value=toInput(toMin(p.sleep));
+  $('setPeakS').value=toInput(toMin(p.peakS));
+  $('setPeakE').value=toInput(toMin(p.peakE));
+  $('chronoDesc').textContent='Currently: '+(CHRONOS[p.chrono]?CHRONOS[p.chrono].label:'Custom')+'.';
+}
+$('setName').addEventListener('change', e=>{ state.profile.name=e.target.value.trim().slice(0,24); save(); renderStats(); });
+[['setWake','wake'],['setSleep','sleep'],['setPeakS','peakS'],['setPeakE','peakE']].forEach(([id,f])=>{
+  $(id).addEventListener('change', e=>{
+    if(!e.target.value) return;
+    state.profile[f]=e.target.value; state.profile.chrono='custom';
+    save(); drawCurve(); renderPlan(); renderSettings(); $('planSummary').innerHTML='';
+    toast('Rhythm updated. Re-run Auto-Plan to use the new hours.');
+  });
+});
+$('changeChrono').addEventListener('click', ()=>$('chronoModal').classList.add('show'));
+$('cmClose').addEventListener('click', ()=>$('chronoModal').classList.remove('show'));
+$('chronoModal').addEventListener('click', e=>{ if(e.target===$('chronoModal')) $('chronoModal').classList.remove('show'); });
+$('chronoPick2').querySelectorAll('.chrono-card').forEach(c=>c.addEventListener('click', ()=>{
+  const ch=CHRONOS[c.dataset.c]; if(!ch) return;
+  Object.assign(state.profile,{chrono:c.dataset.c,wake:ch.wake,sleep:ch.sleep,peakS:ch.peakS,peakE:ch.peakE});
+  $('chronoModal').classList.remove('show');
+  save(); drawCurve(); renderPlan(); renderSettings(); $('planSummary').innerHTML='';
+  toast('Switched to '+ch.label+'.');
+}));
+$('exportBtn').addEventListener('click', ()=>{
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='peakplan-data-'+todayKey()+'.json'; document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},400);
+  toast('Data downloaded.');
+});
+$('resetDayBtn').addEventListener('click', ()=>{
+  if(!confirm('Reset today? This clears the plan and marks all tasks as not done.')) return;
+  state.plan={date:todayKey(),items:[]};
+  state.tasks.forEach(t=>{t.done=false;t.doneDate=null;t.peakHit=false;});
+  delete state.history[todayKey()];
+  $('planSummary').innerHTML='';
+  save(); renderAll(); toast('Day reset. Fresh start.');
+});
+$('clearAllBtn').addEventListener('click', ()=>{
+  if(!confirm('Delete EVERYTHING — tasks, plans, history, settings? This cannot be undone.')) return;
+  if(!confirm('Really sure? All your PeakPlan data will be gone.')) return;
+  localStorage.removeItem(KEY); state=defaultState(); save();
+  $('planSummary').innerHTML=''; renderAll(); showOnboarding(1);
+  toast('All data cleared.');
+});
+
+/* ============================== ONBOARDING ============================== */
+let onbStep=1, onbChrono='steady';
+function showOnboarding(step){
+  onbStep=step||1; paintOnb();
+  $('onb').classList.add('show');
+}
+function paintOnb(){
+  document.querySelectorAll('.onb-step').forEach(s=>s.classList.toggle('active',+s.dataset.step===onbStep));
+  document.querySelectorAll('.onb-dots i').forEach((d,i)=>d.classList.toggle('on',i===onbStep-1));
+  $('onbBack').style.display=onbStep===1?'none':'';
+  $('onbNext').textContent=onbStep===3?'Start planning':'Continue';
+  $('onbSkip').style.display=onbStep===3?'none':'';
+}
+$('chronoPick').querySelectorAll('.chrono-card').forEach(c=>c.addEventListener('click', ()=>{
+  $('chronoPick').querySelectorAll('.chrono-card').forEach(x=>x.classList.remove('sel'));
+  c.classList.add('sel'); onbChrono=c.dataset.c;
+  $('customPeak').style.display = onbChrono==='custom' ? '' : 'none';
+}));
+$('onbNext').addEventListener('click', ()=>{
+  if(onbStep===1){
+    state.profile.name=$('onbName').value.trim().slice(0,24);
+  }
+  if(onbStep===2 && onbChrono==='custom'){
+    const ps=$('onbPeakS').value, pe=$('onbPeakE').value;
+    if(ps&&pe){ state.profile.peakS=ps; state.profile.peakE=pe; }
+  }
+  if(onbStep<3){ onbStep++; paintOnb(); return; }
+  // finish
+  if(onbChrono!=='custom' && CHRONOS[onbChrono]){
+    const ch=CHRONOS[onbChrono];
+    Object.assign(state.profile,{chrono:onbChrono,wake:ch.wake,sleep:ch.sleep,peakS:ch.peakS,peakE:ch.peakE});
+  } else if(onbChrono==='custom'){ state.profile.chrono='custom'; }
+  state.profile.onboarded=true;
+  save(); $('onb').classList.remove('show');
+  renderAll(); toast('Welcome aboard. Add a task to begin.');
+});
+$('onbBack').addEventListener('click', ()=>{ onbStep--; paintOnb(); });
+$('onbSkip').addEventListener('click', ()=>{
+  state.profile.onboarded=true; save(); $('onb').classList.remove('show'); renderAll();
+});
+
+/* ============================== BOOT ============================== */
+function renderAll(){
+  drawCurve(); renderInbox(); renderPlan(); renderStats(); renderSettings();
+}
+$('autoPlanBtn').addEventListener('click', autoPlan);
+buildFormChips();
+renderAll();
+if(!state.profile.onboarded){ showOnboarding(1); }
+</script>
+</body>
+</html>
